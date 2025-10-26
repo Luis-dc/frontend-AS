@@ -3,6 +3,8 @@ import { useAuth } from "react-oidc-context";
 import DenunciaForm from "./pages/DenunciaForm";
 import "bootstrap/dist/css/bootstrap.min.css";
 import DashboardAuditor from "./pages/DashboardAuditor";
+import DashboardAuditorFiltrado from "./pages/DashboardAuditorFiltrado";
+
 
 function App() {
   const auth = useAuth();
@@ -89,6 +91,7 @@ function App() {
             <h4 className="mb-2">Bienvenido, {grupo}</h4>
             <Routes>
             <Route path="/" element={<DashboardAuditor />} />
+            <Route path="/filtrado" element={<DashboardAuditorFiltrado />} />
           </Routes>
           </div>
         )}
