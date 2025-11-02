@@ -114,15 +114,6 @@ export default function DashboardAuditor() {
                 <th>Descripción</th>
                 <th>Fecha</th>
                 <th>Acción</th>
-                <th><div className="d-flex justify-content-end mb-3">
-                     <button
-                        className="btn btn-outline-secondary"
-                          onClick={() => navigate("/filtrado")}
-                       >
-                          Ir a documentos validados
-                      </button>
-                  </div>
-                </th>
               </tr>
             </thead>
             <tbody>

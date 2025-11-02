@@ -6,12 +6,18 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 //onfiguración Cognito
 const cognitoAuthConfig = {
-  authority: "https://cognito-idp.us-east-2.amazonaws.com/us-east-2_jxPATqPYJ", //user pool ID
-  client_id: "4pj32ltqhib5s1vkap8r5p0qn3", //client ID
-  redirect_uri: "http://localhost:3000/",
-  response_type: "code",
-  scope: "openid email profile",
+  authority: process.env.REACT_APP_COGNITO_AUTHORITY,
+  client_id: process.env.REACT_APP_COGNITO_CLIENT_ID,
+  redirect_uri: process.env.REACT_APP_COGNITO_REDIRECT_URI,
+  post_logout_redirect_uri: process.env.REACT_APP_COGNITO_LOGOUT_URI,
+  response_type: process.env.REACT_APP_COGNITO_RESPONSE_TYPE,
+  scope: process.env.REACT_APP_COGNITO_SCOPE,
+  hostedUI: {
+    domain: process.env.REACT_APP_COGNITO_DOMAIN,
+  },
 };
+
+
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 

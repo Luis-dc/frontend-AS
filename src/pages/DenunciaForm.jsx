@@ -4,81 +4,63 @@ import { enviarDenuncia } from "../services/apiService";
 export default function DenunciaForm() {
   const [descripcion, setDescripcion] = useState("");
   const [categoria, setCategoria] = useState("");
-  const [contactoEmail, setContactoEmail] = useState("");
-  const [contactoTelefono, setContactoTelefono] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
   const [archivos, setArchivos] = useState([]);
   const [mensaje, setMensaje] = useState("");
-
-  // 🔹 Validación básica de archivos
-  const validarArchivos = (files) => {
-    const maxSize = 5 * 1024 * 1024; // 5 MB
-    for (let file of files) {
-      if (file.size > maxSize) {
-        alert(`El archivo ${file.name} excede el tamaño máximo (5MB).`);
-        return false;
-      }
-    }
-    return true;
-  };
+  const [enviando, setEnviando] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setEnviando(true);
+    setMensaje("");
+
     try {
       const formData = new FormData();
       formData.append("descripcion", descripcion);
       formData.append("categoria_preliminar", categoria);
-      formData.append("contacto_email", contactoEmail);
-      formData.append("contacto_telefono", contactoTelefono);
-
-      for (let file of archivos) {
-        formData.append("evidencias", file);
-      }
+      formData.append("contacto_email", email);
+      formData.append("contacto_telefono", telefono);
+      archivos.forEach((f) => formData.append("evidencias", f));
 
       const data = await enviarDenuncia(formData);
-      setMensaje(`Denuncia registrada con código: ${data.codigo}`);
 
-      // Limpiar campos
+      setMensaje(`✅ Denuncia registrada con código: ${data.codigo}`);
+      // Limpia el formulario
       setDescripcion("");
       setCategoria("");
-      setContactoEmail("");
-      setContactoTelefono("");
+      setEmail("");
+      setTelefono("");
       setArchivos([]);
-    } catch (err) {
-      console.error(err);
-      setMensaje("Ocurrió un error al registrar la denuncia. Intenta nuevamente.");
+    } catch (error) {
+      setMensaje("❌ Error al registrar la denuncia. Intenta nuevamente.");
+    } finally {
+      setEnviando(false);
     }
-  };
-
-  const handleArchivosChange = (e) => {
-    const files = Array.from(e.target.files);
-    if (validarArchivos(files)) setArchivos(files);
   };
 
   return (
     <div className="container mt-5" style={{ maxWidth: "700px" }}>
-      <div className="card shadow-sm border-0">
+      <div className="card shadow border-0">
         <div className="card-body">
-          <h3 className="card-title text-center text-primary mb-4">
+          <h3 className="text-center text-primary mb-4">
             Registrar Denuncia Ciudadana
           </h3>
 
           <form onSubmit={handleSubmit}>
-            {/* Descripción */}
             <div className="mb-3">
-              <label className="form-label fw-semibold">Descripción de la denuncia</label>
+              <label className="form-label fw-semibold">Descripción</label>
               <textarea
                 className="form-control"
-                rows="4"
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
-                placeholder="Explica brevemente los hechos..."
+                rows="4"
                 required
-              ></textarea>
+              />
             </div>
 
-            {/* Categoría */}
             <div className="mb-3">
-              <label className="form-label fw-semibold">Categoría preliminar</label>
+              <label className="form-label fw-semibold">Categoría</label>
               <select
                 className="form-select"
                 value={categoria}
@@ -93,62 +75,53 @@ export default function DenunciaForm() {
               </select>
             </div>
 
-            {/* Correo */}
             <div className="mb-3">
-              <label className="form-label fw-semibold">Correo de contacto</label>
+              <label className="form-label fw-semibold">Correo</label>
               <input
                 type="email"
                 className="form-control"
-                placeholder="ejemplo@correo.com"
-                value={contactoEmail}
-                onChange={(e) => setContactoEmail(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
-              <div className="form-text">
-                Se usará únicamente para enviarte el código de seguimiento.
-              </div>
             </div>
 
-            {/* Teléfono */}
             <div className="mb-3">
-              <label className="form-label fw-semibold">Teléfono de contacto</label>
+              <label className="form-label fw-semibold">Teléfono</label>
               <input
-                type="tel"
+                type="text"
                 className="form-control"
-                placeholder="(ej. 5555-5555)"
-                value={contactoTelefono}
-                onChange={(e) => setContactoTelefono(e.target.value)}
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
               />
             </div>
 
-            {/* Evidencias */}
             <div className="mb-3">
               <label className="form-label fw-semibold">Adjuntar evidencias</label>
               <input
                 type="file"
                 multiple
                 accept=".jpg,.jpeg,.png,.pdf"
+                onChange={(e) => setArchivos(Array.from(e.target.files))}
                 className="form-control"
-                onChange={handleArchivosChange}
               />
-              <div className="form-text">
-                Puedes subir imágenes o documentos (máx. 5MB por archivo).
-              </div>
             </div>
 
-            {/* Botón */}
-            <button type="submit" className="btn btn-success w-100">
-              Enviar Denuncia
+            <button
+              className="btn btn-success w-100"
+              disabled={enviando}
+            >
+              {enviando ? "Enviando..." : "Enviar Denuncia"}
             </button>
           </form>
 
-          {/* Mensaje de éxito/error */}
           {mensaje && (
             <div
-              className={`alert mt-4 ${
-                mensaje.startsWith("") ? "alert-success" : "alert-danger"
+              className={`alert mt-3 ${
+                mensaje.startsWith("✅")
+                  ? "alert-success"
+                  : "alert-danger"
               }`}
-              role="alert"
             >
               {mensaje}
             </div>

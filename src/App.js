@@ -1,101 +1,222 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "react-oidc-context";
+import React, { useEffect } from "react";
 import DenunciaForm from "./pages/DenunciaForm";
-import "bootstrap/dist/css/bootstrap.min.css";
 import DashboardAuditor from "./pages/DashboardAuditor";
 import DashboardAuditorFiltrado from "./pages/DashboardAuditorFiltrado";
-
+import DashboardLayout from "./components/DashboardLayout";
+import DashboardAuditorEducacion from "./pages/DashboardAuditorEducacion";
+import DashboardAuditorPagos from "./pages/DashboardAuditorPagos";
+import ReportesPagos from "./pages/ReportesPagos";
+import ReportesEducacion from "./pages/ReportesEducacion";
+import ReportesCiudadano from "./pages/ReportesCiudadano";
+import DashboardCiudadano from "./pages/DashboardCiudadano";
+import ConsultaPublica from "./pages/ConsultaPublica";
 
 function App() {
   const auth = useAuth();
 
-  // 🔹 Extraer el grupo de Cognito
+  // Mantener el token disponible en localStorage
+  useEffect(() => {
+    if (auth.isAuthenticated && auth.user?.access_token) {
+      localStorage.setItem("access_token", auth.user.access_token);
+    }
+  }, [auth.isAuthenticated, auth.user]);
+
   const grupo = auth.user?.profile["cognito:groups"]?.[0];
 
-  // 🔹 Cerrar sesión redirigiendo a Cognito
   const signOutRedirect = async () => {
-    const clientId = "4pj32ltqhib5s1vkap8r5p0qn3";
-    const logoutUri = "http://localhost:3000/";
-    const cognitoDomain = "https://us-east-2jxpatqpyj.auth.us-east-2.amazoncognito.com";
+    const clientId = process.env.REACT_APP_COGNITO_CLIENT_ID;
+    const logoutUri = process.env.REACT_APP_COGNITO_LOGOUT_URI;
+    const cognitoDomain = process.env.REACT_APP_COGNITO_DOMAIN;
+  
     await auth.removeUser();
     window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
   };
+  
+  
 
-  // 🔹 Mientras carga Cognito
+  // Loading
   if (auth.isLoading)
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
+      <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
         <p className="text-secondary fs-5">Cargando sesión...</p>
       </div>
     );
 
+  // Error
   if (auth.error)
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <p className="text-danger fs-5">Error: {auth.error.message}</p>
-      </div>
-    );
-
-  // 🔹 Si el usuario NO está autenticado
-  if (!auth.isAuthenticated) {
-    return (
-      <div className="container text-center mt-5">
-        <div className="card shadow-sm mx-auto" style={{ maxWidth: "450px" }}>
-          <div className="card-body">
-            <h2 className="fw-bold mb-3">Portal de Auditoría Social</h2>
-            <p className="text-muted mb-4">
-              Inicia sesión para registrar una denuncia ciudadana.
-            </p>
-            <button
-              className="btn btn-primary px-4"
-              onClick={() => auth.signinRedirect()}
-            >
-              Iniciar sesión
-            </button>
-          </div>
+      <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+        <div className="alert alert-danger shadow-sm p-4">
+          <h4>Error de autenticación</h4>
+          <p>{auth.error.message}</p>
         </div>
       </div>
     );
-  }
 
-  // 🔹 Usuario autenticado: mostrar según grupo
+  // 🧍 Usuario NO autenticado
+if (!auth.isAuthenticated) {
+  return (
+    <div
+      className="d-flex flex-column align-items-center justify-content-center min-vh-100"
+      style={{ backgroundColor: "#f8f9fa", paddingTop: "40px" }}
+    >
+      {/* 🔹 Header */}
+      <div
+        className="card shadow-sm border-0 text-center"
+        style={{ maxWidth: "480px", width: "90%", marginBottom: "20px" }}
+      >
+        <div className="card-body py-4">
+          <h2 className="fw-bold text-primary mb-2">
+            Portal de Auditoría Social
+          </h2>
+          <p className="text-muted mb-4">
+            Inicia sesión para registrar una denuncia ciudadana o consulta el
+            estado de tu denuncia con tu código de seguimiento.
+          </p>
+
+          <button
+            className="btn btn-primary px-4"
+            onClick={() => auth.signinRedirect()}
+          >
+            Iniciar sesión
+          </button>
+        </div>
+      </div>
+
+      {/* 🔍 Módulo de consulta */}
+      <div
+        className="card shadow border-0"
+        style={{
+          maxWidth: "700px",
+          width: "90%",
+          borderRadius: "20px",
+          marginTop: "0", // 👈 elimina espacio excesivo
+        }}
+      >
+        <div className="card-body py-4">
+          <ConsultaPublica />
+        </div>
+      </div>
+
+      {/* 🧭 Footer discreto opcional */}
+      <footer className="text-muted small mt-4">
+        <p className="mb-0">© 2025 Auditoría Social Guatemala</p>
+      </footer>
+    </div>
+  );
+}
+
+  // Autenticado
   return (
     <BrowserRouter>
-      {/* 🔹 Encabezado superior */}
-      <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-        <div className="container-fluid justify-content-between px-3">
-          <span className="navbar-brand fw-bold">Auditoría Social</span>
-          <div>
-            <span className="text-white me-3">
-              {auth.user?.profile.email}{" "}
-              <small className="text-warning">({grupo || "Sin grupo"})</small>
-            </span>
-            <button
-              className="btn btn-outline-light btn-sm"
-              onClick={signOutRedirect}
-            >
-              Cerrar sesión
-            </button>
-          </div>
-        </div>
-      </nav>
+      <Routes>
+        <Route path="/auth/callback" element={<Navigate to="/" replace />} />
 
-      {/* 🔹 Contenedor principal */}
-      <div className="container mt-5">
-        {grupo === "Ciudadanos" ? (
-          <Routes>
-            <Route path="/" element={<DenunciaForm />} />
-          </Routes>
-        ) : (
-          <div className="alert alert-info text-center shadow-sm">
-            <h4 className="mb-2">Bienvenido, {grupo}</h4>
-            <Routes>
-            <Route path="/" element={<DashboardAuditor />} />
-            <Route path="/filtrado" element={<DashboardAuditorFiltrado />} />
-          </Routes>
-          </div>
+        {/* Ciudadanos */}
+        {grupo === "Ciudadanos" && (
+          <>
+            <Route
+              path="/ciudadano/*"
+              element={<DashboardCiudadano signOutRedirect={signOutRedirect} />}
+            >
+              <Route path="denuncia" element={<DenunciaForm />} />
+              <Route path="reportes" element={<ReportesCiudadano />} />
+            </Route>
+            <Route
+              path="/"
+              element={<Navigate to="/ciudadano/denuncia" replace />}
+            />
+          </>
         )}
-      </div>
+
+        {/* Coordinadores */}
+        {grupo === "Coordinadores" && (
+          <>
+            <Route
+              path="/"
+              element={
+                <DashboardLayout signOut={signOutRedirect}>
+                  <DashboardAuditor />
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/filtrado"
+              element={
+                <DashboardLayout signOut={signOutRedirect}>
+                  <DashboardAuditorFiltrado />
+                </DashboardLayout>
+              }
+            />
+          </>
+        )}
+
+        {/* Auditores Pagos */}
+        {grupo === "AuditoresPagos" && (
+          <>
+            <Route
+              path="/"
+              element={
+                <DashboardLayout signOut={signOutRedirect}>
+                  <DashboardAuditorPagos />
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/reportes"
+              element={
+                <DashboardLayout signOut={signOutRedirect}>
+                  <ReportesPagos />
+                </DashboardLayout>
+              }
+            />
+          </>
+        )}
+
+        {/* Auditores Educación */}
+        {grupo === "AuditoresEducacion" && (
+          <>
+            <Route
+              path="/"
+              element={
+                <DashboardLayout signOut={signOutRedirect}>
+                  <DashboardAuditorEducacion />
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/reportes"
+              element={
+                <DashboardLayout signOut={signOutRedirect}>
+                  <ReportesEducacion />
+                </DashboardLayout>
+              }
+            />
+          </>
+        )}
+
+        {/* Fallback de acceso no autorizado */}
+        {![
+          "Ciudadanos",
+          "Coordinadores",
+          "AuditoresPagos",
+          "AuditoresEducacion",
+        ].includes(grupo) && (
+          <Route
+            path="*"
+            element={
+              <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+                <div className="alert alert-warning text-center shadow-sm p-4">
+                  <h4>Acceso restringido</h4>
+                  <p>No perteneces a un grupo autorizado.</p>
+                </div>
+              </div>
+            }
+          />
+        )}
+      </Routes>
     </BrowserRouter>
   );
 }
