@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { AuthProvider } from "react-oidc-context";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "./firebase";
 
 //onfiguración Cognito
 const cognitoAuthConfig = {

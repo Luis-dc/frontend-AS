@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { enviarDenuncia } from "../services/apiService";
+import { logAnalyticsEvent } from "../firebase";
 
 export default function DenunciaForm() {
   const [descripcion, setDescripcion] = useState("");
@@ -12,6 +13,10 @@ export default function DenunciaForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 1. usuario hizo clic en "Enviar denuncia"
+    logAnalyticsEvent("denuncia_submit_click");
+
     setEnviando(true);
     setMensaje("");
 
@@ -23,16 +28,28 @@ export default function DenunciaForm() {
       formData.append("contacto_telefono", telefono);
       archivos.forEach((f) => formData.append("evidencias", f));
 
-      const data = await enviarDenuncia(formData);
+      const data = await enviarDenuncia(formData); // <-- aquí ahora mismo te da ERR_CONNECTION_REFUSED
+
+      // 2. si llegó aquí: denuncia enviada OK
+      logAnalyticsEvent("denuncia_enviada", {
+        categoria: categoria || "sin_categoria",
+        tiene_archivos: archivos.length > 0,
+      });
 
       setMensaje(`✅ Denuncia registrada con código: ${data.codigo}`);
-      // Limpia el formulario
+
+      // limpiar
       setDescripcion("");
       setCategoria("");
       setEmail("");
       setTelefono("");
       setArchivos([]);
     } catch (error) {
+      // 3. si backend está caído, igual registramos el evento de error
+      logAnalyticsEvent("denuncia_error", {
+        reason: error?.message || "unknown",
+      });
+
       setMensaje("❌ Error al registrar la denuncia. Intenta nuevamente.");
     } finally {
       setEnviando(false);
@@ -97,7 +114,9 @@ export default function DenunciaForm() {
             </div>
 
             <div className="mb-3">
-              <label className="form-label fw-semibold">Adjuntar evidencias</label>
+              <label className="form-label fw-semibold">
+                Adjuntar evidencias
+              </label>
               <input
                 type="file"
                 multiple
@@ -107,10 +126,7 @@ export default function DenunciaForm() {
               />
             </div>
 
-            <button
-              className="btn btn-success w-100"
-              disabled={enviando}
-            >
+            <button className="btn btn-success w-100" disabled={enviando}>
               {enviando ? "Enviando..." : "Enviar Denuncia"}
             </button>
           </form>
@@ -118,9 +134,7 @@ export default function DenunciaForm() {
           {mensaje && (
             <div
               className={`alert mt-3 ${
-                mensaje.startsWith("✅")
-                  ? "alert-success"
-                  : "alert-danger"
+                mensaje.startsWith("✅") ? "alert-success" : "alert-danger"
               }`}
             >
               {mensaje}

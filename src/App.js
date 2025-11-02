@@ -12,11 +12,11 @@ import ReportesEducacion from "./pages/ReportesEducacion";
 import ReportesCiudadano from "./pages/ReportesCiudadano";
 import DashboardCiudadano from "./pages/DashboardCiudadano";
 import ConsultaPublica from "./pages/ConsultaPublica";
+import DashboardPublico from "./pages/DashboardPublico";
 
 function App() {
   const auth = useAuth();
 
-  // Mantener el token disponible en localStorage
   useEffect(() => {
     if (auth.isAuthenticated && auth.user?.access_token) {
       localStorage.setItem("access_token", auth.user.access_token);
@@ -29,23 +29,22 @@ function App() {
     const clientId = process.env.REACT_APP_COGNITO_CLIENT_ID;
     const logoutUri = process.env.REACT_APP_COGNITO_LOGOUT_URI;
     const cognitoDomain = process.env.REACT_APP_COGNITO_DOMAIN;
-  
-    await auth.removeUser();
-    window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
-  };
-  
-  
 
-  // Loading
-  if (auth.isLoading)
+    await auth.removeUser();
+    window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
+      logoutUri
+    )}`;
+  };
+
+  if (auth.isLoading) {
     return (
       <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
         <p className="text-secondary fs-5">Cargando sesión...</p>
       </div>
     );
+  }
 
-  // Error
-  if (auth.error)
+  if (auth.error) {
     return (
       <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
         <div className="alert alert-danger shadow-sm p-4">
@@ -54,60 +53,69 @@ function App() {
         </div>
       </div>
     );
+  }
 
   // 🧍 Usuario NO autenticado
-if (!auth.isAuthenticated) {
-  return (
-    <div
-      className="d-flex flex-column align-items-center justify-content-center min-vh-100"
-      style={{ backgroundColor: "#f8f9fa", paddingTop: "40px" }}
-    >
-      {/* 🔹 Header */}
+  if (!auth.isAuthenticated) {
+    return (
       <div
-        className="card shadow-sm border-0 text-center"
-        style={{ maxWidth: "480px", width: "90%", marginBottom: "20px" }}
+        className="d-flex flex-column align-items-center justify-content-center min-vh-100"
+        style={{ backgroundColor: "#f8f9fa", paddingTop: "40px" }}
       >
-        <div className="card-body py-4">
-          <h2 className="fw-bold text-primary mb-2">
-            Portal de Auditoría Social
-          </h2>
-          <p className="text-muted mb-4">
-            Inicia sesión para registrar una denuncia ciudadana o consulta el
-            estado de tu denuncia con tu código de seguimiento.
-          </p>
+        {/* header */}
+        <div
+          className="card shadow-sm border-0 text-center"
+          style={{ maxWidth: "480px", width: "90%", marginBottom: "20px" }}
+        >
+          <div className="card-body py-4">
+            <h2 className="fw-bold text-primary mb-2">
+              Portal de Auditoría Social
+            </h2>
+            <p className="text-muted mb-4">
+              Inicia sesión para registrar una denuncia ciudadana o consulta el
+              estado de tu denuncia con tu código de seguimiento.
+            </p>
 
-          <button
-            className="btn btn-primary px-4"
-            onClick={() => auth.signinRedirect()}
-          >
-            Iniciar sesión
-          </button>
+            <button
+              className="btn btn-primary px-4"
+              onClick={() => auth.signinRedirect()}
+            >
+              Iniciar sesión
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* 🔍 Módulo de consulta */}
-      <div
-        className="card shadow border-0"
-        style={{
-          maxWidth: "700px",
-          width: "90%",
-          borderRadius: "20px",
-          marginTop: "0", // 👈 elimina espacio excesivo
-        }}
-      >
-        <div className="card-body py-4">
-          <ConsultaPublica />
+        {/* 🔹 NUEVO: dashboard público */}
+        <div
+          className="card shadow border-0 mb-3"
+          style={{ maxWidth: "900px", width: "90%", borderRadius: "20px" }}
+        >
+          <div className="card-body py-4">
+            <DashboardPublico />
+          </div>
         </div>
+
+        {/* 🔍 Módulo de consulta pública */}
+        <div
+          className="card shadow border-0"
+          style={{
+            maxWidth: "700px",
+            width: "90%",
+            borderRadius: "20px",
+            marginTop: "0",
+          }}
+        >
+          <div className="card-body py-4">
+            <ConsultaPublica />
+          </div>
+        </div>
+
+        <footer className="text-muted small mt-4">
+          <p className="mb-0">© 2025 Auditoría Social Guatemala</p>
+        </footer>
       </div>
-
-      {/* 🧭 Footer discreto opcional */}
-      <footer className="text-muted small mt-4">
-        <p className="mb-0">© 2025 Auditoría Social Guatemala</p>
-      </footer>
-    </div>
-  );
-}
-
+    );
+  }
   // Autenticado
   return (
     <BrowserRouter>

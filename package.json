@@ -9,6 +9,7 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.12.2",
     "bootstrap": "^5.3.8",
+    "firebase": "^12.5.0",
     "lucide-react": "^0.548.0",
     "oidc-client-ts": "^3.3.0",
     "react": "^19.2.0",
